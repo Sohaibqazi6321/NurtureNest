@@ -1,0 +1,3 @@
+fastapi
+uvicorn
+# any other libraries you need, e.g., sqlalchemy, pydantic, etc.

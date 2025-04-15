@@ -18,30 +18,32 @@ RUN apt-get update && apt-get install -y \
     libblkid-dev \
     openjdk-11-jdk \
     cmake \
+    python3 \
+    python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
 # ------------------------------
 # 2. Install Android SDK Command-line Tools
 # ------------------------------
-# Create the folder for the Android SDK; we'll extract the command-line tools into a "latest" folder.
+# Create the folder for the command-line tools, download and extract them,
+# then rename the extracted folder to "latest" (so sdkmanager is located in latest/bin).
 RUN mkdir -p /usr/local/android-sdk/cmdline-tools && \
     cd /usr/local/android-sdk/cmdline-tools && \
     curl -LO https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip && \
     unzip commandlinetools-linux-9477386_latest.zip && \
-    # Rename the extracted folder to "latest"
     mv cmdline-tools latest && \
     rm commandlinetools-linux-9477386_latest.zip
 
-# Set environment variable for the Android SDK root
+# Set environment variable for the Android SDK root.
 ENV ANDROID_SDK_ROOT=/usr/local/android-sdk
 
 # Add Android SDK tools to PATH:
-ENV PATH="${PATH}:${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin:${ANDROID_SDK_ROOT}/platform-tools:${ANDROID_SDK_ROOT}/emulator"
+ENV PATH="$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator"
 
-# Accept Android SDK licenses to silence flutter doctor warnings.
+# Accept Android SDK licenses.
 RUN yes | sdkmanager --licenses || true
 
-# Install the required Android SDK components:
+# Install required Android SDK components:
 RUN sdkmanager --install "platform-tools" "platforms;android-33" "build-tools;33.0.0"
 
 # ------------------------------
@@ -49,8 +51,7 @@ RUN sdkmanager --install "platform-tools" "platforms;android-33" "build-tools;33
 # ------------------------------
 RUN apt-get update && apt-get install -y wget gnupg && \
     wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - && \
-    echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" \
-        >> /etc/apt/sources.list.d/google-chrome.list && \
+    echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list && \
     apt-get update && \
     apt-get install -y google-chrome-stable
 
@@ -61,10 +62,18 @@ RUN curl -LO https://storage.googleapis.com/flutter_infra_release/releases/stabl
     tar xf flutter_linux_3.7.0-stable.tar.xz -C /usr/local && \
     rm flutter_linux_3.7.0-stable.tar.xz
 
-# Add Flutter to the PATH
+# Add Flutter to the PATH.
 ENV PATH="/usr/local/flutter/bin:${PATH}"
 
 # ------------------------------
-# 5. Set the Working Directory
+# 5. Install Python Dependencies from requirements.txt
+# ------------------------------
+# This copies your backend requirements file from the backend folder in your repo
+# into the container and installs the Python dependencies.
+COPY backend/requirements.txt /tmp/requirements.txt
+RUN pip3 install -r /tmp/requirements.txt
+
+# ------------------------------
+# 6. Set the Working Directory
 # ------------------------------
 WORKDIR /workspace
