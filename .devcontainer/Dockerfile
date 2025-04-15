@@ -1,4 +1,4 @@
-# Use Microsoft's base image for dev containers (Ubuntu-based)
+# Use Microsoft's Ubuntu-based Dev Container image
 FROM mcr.microsoft.com/devcontainers/base:ubuntu
 
 # ------------------------------
@@ -23,22 +23,25 @@ RUN apt-get update && apt-get install -y \
 # ------------------------------
 # 2. Install Android SDK Command-line Tools
 # ------------------------------
+# Create the folder for the command-line tools and download them
 RUN mkdir -p /usr/local/android-sdk/cmdline-tools && \
     cd /usr/local/android-sdk/cmdline-tools && \
     curl -LO https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip && \
     unzip commandlinetools-linux-9477386_latest.zip && \
     rm commandlinetools-linux-9477386_latest.zip
 
+# Set environment variable for the Android SDK root
 ENV ANDROID_SDK_ROOT=/usr/local/android-sdk
-ENV PATH="${PATH}:${ANDROID_SDK_ROOT}/cmdline-tools/bin:${ANDROID_SDK_ROOT}/platform-tools:${ANDROID_SDK_ROOT}/emulator"
+# Add Android SDK tools to PATH (this assumes you'll install platform-tools later or they become available after running sdkmanager)
+ENV PATH="$PATH:$ANDROID_SDK_ROOT/cmdline-tools/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator"
 
-# Accept Android licenses to silence Flutter Doctor warnings.
+# Accept Android SDK licenses to silence flutter doctor warnings
 RUN yes | sdkmanager --licenses || true
-# (Optional) If you want to install specific platforms or build-tools, uncomment and adjust:
+# Optional: you can install specific packages (uncomment if needed)
 # RUN sdkmanager --install "platform-tools" "platforms;android-33" "build-tools;33.0.0"
 
 # ------------------------------
-# 3. Install Google Chrome for Flutter Web
+# 3. Install Google Chrome for Web Development
 # ------------------------------
 RUN apt-get update && apt-get install -y wget gnupg && \
     wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - && \
@@ -54,7 +57,7 @@ RUN curl -LO https://storage.googleapis.com/flutter_infra_release/releases/stabl
     tar xf flutter_linux_3.7.0-stable.tar.xz -C /usr/local && \
     rm flutter_linux_3.7.0-stable.tar.xz
 
-# Add Flutter to the PATH
+# Add Flutter to the PATH so flutter commands are available
 ENV PATH="/usr/local/flutter/bin:${PATH}"
 
 # ------------------------------
