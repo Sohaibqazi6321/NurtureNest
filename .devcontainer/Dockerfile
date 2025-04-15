@@ -2,7 +2,7 @@
 FROM mcr.microsoft.com/devcontainers/base:ubuntu
 
 # ------------------------------
-# 1. Install Core Dependencies
+# 1. Install Core Dependencies and Python
 # ------------------------------
 RUN apt-get update && apt-get install -y \
     curl \
@@ -25,8 +25,7 @@ RUN apt-get update && apt-get install -y \
 # ------------------------------
 # 2. Install Android SDK Command-line Tools
 # ------------------------------
-# Create the folder for the command-line tools, download and extract them,
-# then rename the extracted folder to "latest" (so sdkmanager is located in latest/bin).
+# Create the folder for the command-line tools, download, extract and rename the folder to "latest"
 RUN mkdir -p /usr/local/android-sdk/cmdline-tools && \
     cd /usr/local/android-sdk/cmdline-tools && \
     curl -LO https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip && \
@@ -34,16 +33,16 @@ RUN mkdir -p /usr/local/android-sdk/cmdline-tools && \
     mv cmdline-tools latest && \
     rm commandlinetools-linux-9477386_latest.zip
 
-# Set environment variable for the Android SDK root.
+# Set environment variable for the Android SDK root
 ENV ANDROID_SDK_ROOT=/usr/local/android-sdk
 
-# Add Android SDK tools to PATH:
+# Add Android SDK tools to PATH; note the use of the "latest" folder
 ENV PATH="$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator"
 
-# Accept Android SDK licenses.
+# Accept Android SDK licenses to silence Flutter doctor warnings
 RUN yes | sdkmanager --licenses || true
 
-# Install required Android SDK components:
+# Install essential Android SDK components
 RUN sdkmanager --install "platform-tools" "platforms;android-33" "build-tools;33.0.0"
 
 # ------------------------------
@@ -62,14 +61,14 @@ RUN curl -LO https://storage.googleapis.com/flutter_infra_release/releases/stabl
     tar xf flutter_linux_3.7.0-stable.tar.xz -C /usr/local && \
     rm flutter_linux_3.7.0-stable.tar.xz
 
-# Add Flutter to the PATH.
+# Add Flutter to the PATH so Flutter commands are available
 ENV PATH="/usr/local/flutter/bin:${PATH}"
 
 # ------------------------------
-# 5. Install Python Dependencies from requirements.txt
+# 5. Install Python Backend Dependencies
 # ------------------------------
-# This copies your backend requirements file from the backend folder in your repo
-# into the container and installs the Python dependencies.
+# Copy the backend requirements file from your repository into the container and install dependencies.
+# (Ensure your build context is the repository root by setting "context": ".." in devcontainer.json)
 COPY backend/requirements.txt /tmp/requirements.txt
 RUN pip3 install -r /tmp/requirements.txt
 

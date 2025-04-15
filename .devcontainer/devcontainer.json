@@ -1,6 +1,7 @@
 {
   "name": "Flutter Codespace",
   "build": {
+    "context": "..",
     "dockerfile": "Dockerfile"
   },
   "customizations": {
